@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: SASKV5N RDS
@@ -14,7 +13,7 @@ Parameters:
     AllowedPattern: "^[a-zA-Z][-a-zA-Z0-9]*$"
 
   DatabaseUser:
-    Default: startupadmin
+    Default: YOUR_CUSTOM_USERNAME # Change from default 'startupadmin'
     Type: String
     Description: Database admin account name
     MinLength: 5
@@ -66,7 +65,7 @@ Parameters:
   DatabaseEngine:
     Default: postgres
     Type: String
-    Description: Database engines - PostgreSQL, MariaDB or MySQL
+    Description: Database engines - PostgreSQL, MariaDB, or MySQL
     ConstraintDescription: Choose an engine from the drop down
     AllowedValues:
       - postgres
@@ -167,7 +166,6 @@ Parameters:
       - true
       - false
 
-
 Conditions:
 
   IsProd: !Equals [ !Ref EnvironmentName, prod ]
@@ -178,7 +176,6 @@ Conditions:
     - !Condition AlarmsEnabled
     - !Equals [ !Ref EnhancedMonitoring, true ]
     - !Not [ !Equals [ !Ref DatabaseInstanceClass, "db.m1.small" ] ]
-
 
 Resources:
 
@@ -232,6 +229,14 @@ Resources:
       MonitoringInterval: !If [ EnhancedMonitoringSupprtedAndEnabled, 60, 0 ]
       MonitoringRoleArn: !If [ EnhancedMonitoringSupprtedAndEnabled, !GetAtt EnhancedMonitoringRole.Arn, !Ref "AWS::NoValue" ]
       CopyTagsToSnapshot: true
+      PubliclyAccessible: false
+      DeletionProtection: true
+      EnableCloudwatchLogsExports:
+        - postgres
+        - postgresql
+      EnableIAMDatabaseAuthentication: true
+      BackupRetentionPeriod: 7
+      Port: YOUR_CUSTOM_PORT # Replace with non-default port
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
@@ -342,7 +347,6 @@ Resources:
         - !Ref DatabaseAlarmTopic
     DependsOn: Database
 
-
 Outputs:
 
   Name:
@@ -388,4 +392,3 @@ Outputs:
     Value: !GetAtt DatabaseAlarmTopic.TopicName
     Export:
       Name: !Sub ${AWS::StackName}-DatabaseAlarmTopicName
-

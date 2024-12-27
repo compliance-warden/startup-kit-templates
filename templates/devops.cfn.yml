@@ -57,5 +57,11 @@ Resources:
     Properties:
       DisplayName: STARTUP_KIT_DEVOPS
       TopicName: STARTUP_KIT_DEVOPS
-
-
+      TopicPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::YOUR_ACCOUNT_ID:root
+            Action: "SNS:Publish"
+            Resource: "!Ref StartupKitDevOpsSNSTopic"

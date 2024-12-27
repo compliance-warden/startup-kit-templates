@@ -1,8 +1,7 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
-Description:  SASKV5N Elastic Beanstalk
+Description: SASKV5N Elastic Beanstalk
 
-# App stack creation prerequisites:  first create a VPC stack, then a DB stack.
+# App stack creation prerequisites: first create a VPC stack, then a DB stack.
 
 Parameters:
 
@@ -406,10 +405,17 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          -
-            Effect: Allow
-            Action: "*"
-            Resource: "*"
+          - Effect: Allow
+            Action:
+              - ec2:DescribeInstances
+              - ec2:YourRequiredAction
+              - s3:YourRequiredAction
+              - rds:YourRequiredAction
+            Resource:
+              - arn:aws:ec2:YOUR_REGION:YOUR_ACCOUNT_ID:instance:YOUR_INSTANCE_ID
+              - arn:aws:s3:::YOUR_BUCKET_NAME
+              - arn:aws:rds:YOUT_REGION:YOUR_ACCOUNT_ID:YOUR_DB_INSTANCE
+            # Specify the necessary actions and resources
 
   AppInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -417,6 +423,25 @@ Resources:
       Path: /
       Roles:
       - !Ref AppRole
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Application security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: YOUR_ALLOWED_IP_RANGE
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: YOUR_ALLOWED_IP_RANGE
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: YOUR_ALLOWED_IP_RANGE
+        # Other required ports with specific IP ranges
 
 Outputs:
 
@@ -443,5 +468,3 @@ Outputs:
     Value: !Ref StackType
     Export:
       Name: !Sub "${AWS::StackName}-TypeOfStack"
-
-
