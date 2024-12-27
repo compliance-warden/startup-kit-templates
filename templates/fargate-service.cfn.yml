@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: 2010-09-09
 
 # A CloudFormation template to deploy an additional service to Fargate. This requires an existing
@@ -218,6 +217,11 @@ Resources:
 
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
     DeletionPolicy: Delete
 
   CodeBuildServiceRole:
@@ -878,5 +882,3 @@ Outputs:
     Value: !GetAtt CodePipelineArtifactBucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-CodePipelineArtifactBucketArn
-
-

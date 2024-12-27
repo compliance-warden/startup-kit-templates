@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: 2010-09-09
 
 # A CloudFormation template to create/configure an AWS Fargate Cluster, Application Load Balancer (ALB),
@@ -236,6 +235,39 @@ Resources:
 
   DefaultContainerBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      AccessControl: Private
+      LoggingConfiguration:
+        DestinationBucketName: !Ref CodePipelineArtifactBucket
+        LogFilePrefix: access-logs/
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref YourKmsKey
+
+  DefaultContainerBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub arn:aws:s3:::${DefaultContainerBucket}/*
+              - !Sub arn:aws:s3:::${DefaultContainerBucket}
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+      Bucket: !Ref DefaultContainerBucket
 
   CodePipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -524,6 +556,9 @@ Resources:
   EcrDockerRepository:
     Type: AWS::ECR::Repository
     Properties:
+      ImageScanningConfiguration:
+        scanOnPush: true
+      ImageTagMutability: IMMUTABLE
       LifecyclePolicy:
         LifecyclePolicyText: !Sub
           - |
@@ -680,6 +715,7 @@ Resources:
         - Name: !Ref GitSourceRepo
           Image: !Ref SeedDockerImage
           Essential: true
+          ReadonlyRootFilesystem: true
           PortMappings:
             - ContainerPort:
                 Fn::ImportValue: !Sub ${NetworkStackName}-AppIngressPort
@@ -995,4 +1031,3 @@ Outputs:
     Value: !GetAtt CodePipelineArtifactBucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-CodePipelineArtifactBucketArn
-

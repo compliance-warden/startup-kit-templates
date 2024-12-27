@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: SASKV5N Aurora
@@ -15,7 +14,7 @@ Parameters:
     AllowedPattern: "^[a-zA-Z][-a-zA-Z0-9]*$"
 
   DatabaseUser:
-    Default: startupadmin
+    Default: YOUR_CUSTOM_USERNAME # Use a custom admin username
     Type: String
     Description: Database admin account name
     MinLength: 5
@@ -203,10 +202,19 @@ Resources:
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       StorageEncrypted: !Ref EncryptionAtRest
       DatabaseName: !Ref DatabaseName
-      DBClusterParameterGroupName: !If [ IsAuroraMySQL,  default.aurora5.6, default.aurora-postgresql9.6 ]
-      Port: !If [ IsAuroraMySQL,  3306, 5432 ]
+      DBClusterParameterGroupName: !If [ IsAuroraMySQL, default.aurora5.6, default.aurora-postgresql9.6 ]
+      Port: YOUR_NON_DEFAULT_PORT # Set a non-default port
       VpcSecurityGroupIds:
         - Fn::ImportValue: !Sub ${NetworkStackName}-DatabaseGroupID
+      DeletionProtection: true # Ensure deletion protection is enabled
+      EnableCloudwatchLogsExports:
+        - audit
+        - error
+        - general
+        - slowquery
+      EnableIAMDatabaseAuthentication: true # Enable IAM DB authentication
+      BackupRetentionPeriod: 7 # Set backup retention period to a minimum of 7 days
+      AutoMinorVersionUpgrade: true # Ensure automatic minor version upgrades for cluster
     DependsOn: DatabaseSubnetGroup
 
   AuroraInstance0:
@@ -217,10 +225,12 @@ Resources:
       DBInstanceClass: !Ref DatabaseInstanceClass
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       StorageEncrypted: !Ref EncryptionAtRest
-      DBParameterGroupName: !If [ IsAuroraMySQL,  default.aurora5.6, default.aurora-postgresql9.6 ]
+      DBParameterGroupName: !If [ IsAuroraMySQL, default.aurora5.6, default.aurora-postgresql9.6 ]
       MonitoringInterval: !If [ EnhancedMonitoringSupprtedAndEnabled, 60, 0 ]
       MonitoringRoleArn: !If [ EnhancedMonitoringSupprtedAndEnabled, !GetAtt EnhancedMonitoringRole.Arn, !Ref "AWS::NoValue" ]
       CopyTagsToSnapshot: true
+      DeletionProtection: true # Ensure deletion protection is enabled
+      AutoMinorVersionUpgrade: true # Ensure automatic minor version upgrades
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
@@ -235,10 +245,12 @@ Resources:
       DBInstanceClass: !Ref DatabaseInstanceClass
       DBSubnetGroupName: !Ref DatabaseSubnetGroup
       StorageEncrypted: !Ref EncryptionAtRest
-      DBParameterGroupName: !If [ IsAuroraMySQL,  default.aurora5.6, default.aurora-postgresql9.6 ]
+      DBParameterGroupName: !If [ IsAuroraMySQL, default.aurora5.6, default.aurora-postgresql9.6 ]
       MonitoringInterval: !If [ EnhancedMonitoringSupprtedAndEnabled, 60, 0 ]
       MonitoringRoleArn: !If [ EnhancedMonitoringSupprtedAndEnabled, !GetAtt EnhancedMonitoringRole.Arn, !Ref "AWS::NoValue" ]
       CopyTagsToSnapshot: true
+      DeletionProtection: true # Ensure deletion protection is enabled
+      AutoMinorVersionUpgrade: true # Ensure automatic minor version upgrades
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
@@ -405,4 +417,3 @@ Outputs:
     Value: !GetAtt DatabaseAlarmTopic.TopicName
     Export:
       Name: !Sub ${AWS::StackName}-DatabaseAlarmTopicName
-
